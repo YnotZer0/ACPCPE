@@ -22,15 +22,11 @@ If the bytes received do not contain any ESC/P (e.g. a BASIC program print or pl
 this program will generate a simple text (.txt) file.
 
 The communication with the Arduino program works as follows:
-	- At the press of the push-button ONLINE, the Arduino sends the ESC/P command 17 
-		(Select Printer) and starts listening from the Amstrad CPC Printer port.
-	- At the press of the push-button OFFLINE, the Arduino sends the ESC/P command 19 
-		(Deselect Printer) and stops to listen from the Amstrad CPC Printer port.
+	- At the press of the push-button (LED goes ON to indicate ONLINE), the Arduino sends 
+		the ESC/P command 17 (Select Printer) and starts listening from the Amstrad CPC Printer port.
+	- At another press of the push-button (LED goes OFF to indicate OFFLINE), the Arduino sends 
+		the ESC/P command 19 (Deselect Printer) and stops to listen from the Amstrad CPC Printer port.
 	- This Python program uses these two commands to open and close the files.
-	- In other words, when ready to print press ONLINE for Arduino to start sending the 
-		data from the Amstrad CPC to the PC. This Python program will then create a new 
-		file and start dumping all data into it. Once finished, press OFFLINE, so that 
-		this Python program can close the file and wait for next print job.
 
 Supported ESC/P codes so far:
 	10			Line Feed

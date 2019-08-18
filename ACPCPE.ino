@@ -12,7 +12,10 @@
  * CPC's Printer Port (Parallel) => Teensy USB (Serial Hex data) => PC USB Serial Port
  * 
  * A provided Pyhton program will read the hexadecimal bytes received 
- * on the USB Serial port and translate them to generate different text files. 
+ * on the USB Serial port and translate them to generate different text files.
+ * 
+ * A small debounced push-button circuit (555 in monostable mode) is used as 
+ * Online/Offline button.
  * 
  */
 
@@ -68,15 +71,21 @@
   * to accept data
   * 
   * The communication with the Pyhton program works as follows:
-  *   - At the press of the push-button ONLINE, the Arduino sends the ESC/P command
-  *     17 (Select Printer) and starts listening from the Amstrad CPC Printer port.
-  *   - At the press of the push-button OFFLINE, the Arduino sends the ESC/P command
-  *     19 (Deselect Printer) and stops to listen from the Amstrad CPC Printer port.
+  *   - At the press of the push-button:
+  *       - the LED lights up to indicate that the "printer is Online
+  *       - the Arduino sends the ESC/P command 17 (Select Printer) 
+  *       - and starts listening from the Amstrad CPC Printer port.
+  *   - At the second press of the push-button:
+  *       - the LED turns off to indicate that the "printer is Offline
+  *       - the Arduino sends the ESC/P command 19 (Deselect Printer) 
+  *       - and stops to listen from the Amstrad CPC Printer port.
   *   - The Python program uses these two commands to open and close the files.
-  *   - In other words, when ready to print press ONLINE for Arduino to start sending
-  *     the data from the Amstrad CPC to the PC. The Python program that runs on the PC
-  *     will then create a new file and start dumping all data into it. Once finished, 
-  *     press OFFLINE, so that Python can close the file and wait for next print job.
+  *   
+  *   - In other words (or How to print setep-by-step:
+  *     - When ready to print press the push-button and ensure that the Online LED is ON.
+  *     - Print from the Amstrad CPC (from BASIC, word processor, etc.).
+  *     - Once printing is finished, press the push-button again. LED should go off.
+  *     - The Python program running on the PC will dump all received bytes into file(s).
   *     
   */
 
@@ -93,7 +102,8 @@
 #define PRN_D5    7   // Data 5
 #define PRN_D6    8   // Data 6
 
-#define PRN_BUSY  9   // Busy = 1 / Ready = 0
+#define PRN_BUSY  9   // Busy = HIGH / Ready = LOW
+#define ONOFF_LED 10  // Indicator of "printer" Online/Offline
 
 #define COM_SPEED 115200 // Speed of the COM port between Arduino and PC
 
@@ -107,6 +117,9 @@ void setup() {
   pinMode(PRN_BUSY, OUTPUT);
   digitalWrite(PRN_BUSY, 1); // Tell CPC that we're busy setting up everything
   
+  pinMode(ONOFF_LED, OUTPUT);
+  digitalWrite(ONOFF_LED, LOW);
+  
   pinMode(PRN_D0, INPUT);
   pinMode(PRN_D1, INPUT);
   pinMode(PRN_D2, INPUT);
@@ -116,9 +129,9 @@ void setup() {
   pinMode(PRN_D6, INPUT);
 
   pinMode(PRN_STRB, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(PRN_STRB), readByte, LOW);
+  attachInterrupt(digitalPinToInterrupt(PRN_STRB), readCPCbyte, LOW);
   pinMode(ONOFF_BTN, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(ONOFF_BTN), onlineoffline, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(ONOFF_BTN), btnPressed, CHANGE);
     
   wasOnline = false;
   data = 0;
@@ -130,7 +143,7 @@ void setup() {
 }
 
 /////////////////////////////////////////////////////////////////////////
-void readByte(){
+void readCPCbyte(){
   // This function is called when /Strobe is Low (detected by Arduino interrupt)
 
   // Receive Byte
@@ -147,19 +160,23 @@ void readByte(){
 }
 
 /////////////////////////////////////////////////////////////////////////
-void onlineoffline(){
+void btnPressed(){
   // This function is called each time ONLINE/OFFLINE is Low (detected by Arduino interrupt)
-  
-  digitalWrite(PRN_BUSY, 1); // Printer is Offline, tell the CPC that can't send data
 
-  if(wasOnline){
-    Serial.print(25, HEX); // ESC 19 = Deselect printer
-    wasOnline = false;
-  }else{
-    Serial.print(23, HEX); // ESC 17 = Select printer
-    wasOnline = true;
-    digitalWrite(PRN_BUSY, 0); // Printer is Online, tell the CPC that we're ready for data
+  digitalWrite(PRN_BUSY, HIGH); // Printer is Offline, tell the CPC that can't send data
+  
+  if(digitalRead(ONOFF_BTN) == LOW){
+    if(wasOnline){
+      wasOnline = false;
+      Serial.print(25, HEX); // ESC 19 = Deselect printer
+    }else{
+      wasOnline = true;
+      Serial.print(23, HEX); // ESC 17 = Select printer
+      digitalWrite(PRN_BUSY, LOW); // Printer is Online, tell the CPC that we're ready for data
+    }
   }
+
+  digitalWrite(ONOFF_LED, wasOnline);
 }
 
 /////////////////////////////////////////////////////////////////////////
