@@ -287,7 +287,7 @@ class acpcpe:
 						whereEndTitle = wholeText.find('</title>')
 						title = wholeText[whereTitle + 7:whereEndTitle]
 						# Replace </br> with <br>
-						wholeText = wholeText.replace("</br>", "")
+						wholeText = wholeText.replace("</br>", "\n")
 					else:
 						title = "Printed from Amstrad CPC with ACPCPE on " + filename
 						# Replace </br> with <br>
