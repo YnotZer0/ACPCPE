@@ -261,7 +261,10 @@ class acpcpe:
 				gotESC = True
 			elif ibyte == 10 and gotCR: # Line Feed after CR
 				if self.doHTML and self.haveESC:
-					self.bufferoutput.append("<br>")
+					# We use the invalid </br> tag, 
+					# to differenciate from real <br> inserted
+					# on the text
+					self.bufferoutput.append("</br>")
 				else:
 					self.bufferoutput.append("\n")
 				gotCR = False
@@ -271,15 +274,29 @@ class acpcpe:
 	############################################################
 	# Output to file and/or screen
 	def generateOutput(self):
+		wholeText = ''.join(self.bufferoutput)
+		
 		if self.doFile:
 			filename = datetime.datetime.fromtimestamp(time.time()).strftime('%Y%m%d-%H%M%S')
 
 			if self.haveESC:
 				if self.doHTML:
-					self.log2file("Generating HTML file" + filename + ".html")
+					# Check if <title> was in the text
+					whereTitle = wholeText.find('<title>')
+					if(whereTitle >= 0):
+						whereEndTitle = wholeText.find('</title>')
+						title = wholeText[whereTitle + 7:whereEndTitle]
+						# Replace </br> with <br>
+						wholeText = wholeText.replace("</br>", "")
+					else:
+						title = "Printed from Amstrad CPC with ACPCPE on " + filename
+						# Replace </br> with <br>
+						wholeText = wholeText.replace("</br>", "<br>")
+
+					self.log2file("Generating HTML file: " + filename + ".html")
 					outputfile = open(filename + ".html", "w")
 					# Add HMTL Header to file
-					outputfile.write("<html><head><title>Printed from Amstrad CPC with ACPCPE on " + filename + "</title></head><body>")
+					outputfile.write("<html><head><title>" + title + "</title></head><body>")
 				elif self.doMarkdown:
 					self.log2file("Generating Markdown file: " + filename + ".md")
 					outputfile = open(filename + ".md", "w")
@@ -288,8 +305,9 @@ class acpcpe:
 				outputfile = open(filename + ".txt", "w")
 
 			# Add body to file
-			for bo in self.bufferoutput:
-				outputfile.write(bo)
+			#for bo in self.bufferoutput:
+			#	outputfile.write(bo)
+			outputfile.write(wholeText)
 			
 			if self.doHTML and self.haveESC:
 				# Add HMTL Footer to file
@@ -298,9 +316,10 @@ class acpcpe:
 			outputfile.close()
 		
 		if self.doEcho:
-			for bo in self.bufferoutput:
-				print(bo, end='')
-				#print(bo)
+			#for bo in self.bufferoutput:
+			#	print(bo, end='')
+			#	#print(bo)
+				print(wholeText)
 				sys.stdout.flush()
 		
 		# Generate RAW file
