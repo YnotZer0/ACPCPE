@@ -1,6 +1,7 @@
  **ACPCPE (A CPC Printer Emulator)**
  
  ![ACPCPE](https://github.com/asmCcoder/ACPCPE/blob/master/ACPCPE_full.jpg "ACPCPE")
+ ![Debounced push-button](https://github.com/asmCcoder/ACPCPE/blob/master/Debounced_push-button_schematic.png "Debounced push-button with 555 Timer IC in monostable mode")
 
  The (exchange the A for  Amstrad,  Arduino, Awesome, Awful or whatever
  you want) CPC Printer Emulator is a hardware and software project that
