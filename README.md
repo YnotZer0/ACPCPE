@@ -19,7 +19,7 @@
 
  It can be used not only  for   word  processor documents, but also for
  exporting BASIC programs to a PC  and  use them on an emulator. Simply
- *print* the program using Locomotive BASIC command *LIST * and then take
+ *print* the program using Locomotive BASIC command *LIST #8* and then take
  the .txt file from your PC into  the emulator (e.g. WinAPE's Auto Type
  option).
 
