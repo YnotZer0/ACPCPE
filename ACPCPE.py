@@ -46,6 +46,11 @@ Supported ESC/P codes so far:
 	27 83 49	Select subscript
 	27 87		Cancel superscript/subscript
 
+ToDo ESC/P codes:
+	27 107 48	Select NLQ Roman font
+	27 107 49	Select NLQ Sans Serif font
+
+
 ---------------------------LICENSE NOTICE-------------------------------- 
 MIT License
 
@@ -155,7 +160,7 @@ class acpcpe:
 					self.buffer.append(rcvbyte)
 					
 					if(rcvddata == False):
-						self.log2file("Received data. Press OFFLINE button to dump to file.")
+						self.log2file("Received data. Press (once CPC is finished) OFFLINE button to dump to file.")
 						sys.stdout.flush()
 						rcvddata = True
 			else:

@@ -1,10 +1,17 @@
 /*
- * ACPCPE - Amstrad CPC Printer Emulator
+ * ACPCPE v2.0 - Amstrad CPC Printer Emulator
+ * 
+ * v1.0 - debounce button using an NE555 in bistable mode.
+ * v2.0 - software debounce button. NE555 removed
  * 
  * Having an Arduino connected to the Amstrad CPC's printer port,
  * this program simply converts the parallel data coming from the 
  * printer port to hexadecimal values and sends them through the 
  * serial port of the Arduino to a listening PC.
+ * 
+ * This program also checks the status of a push-button used as 
+ * Online/Offline button, and turns on/off an LED to indicate 
+ * Online/Offline status.
  * 
  * Instead of an Arduino, this program uses Teensy 2.0, but any
  * Arduino can be used. It's just a matter of redefining the pins.
@@ -13,9 +20,6 @@
  * 
  * A provided Pyhton program will read the hexadecimal bytes received 
  * on the USB Serial port and translate them to generate different text files.
- * 
- * A small debounced push-button circuit (555 in monostable mode) is used as 
- * Online/Offline button.
  * 
  */
 
@@ -47,12 +51,10 @@
  /*
   * Amstrad CPC Printer Port
   * 
-  * The CPC's printer port has only 7 bits of data, 
-  * therefore can only print 128 different characters
-  * instead of the 256 allowed by a 8-bit data port.
-  * 7-bit data port is enough for printing English 7-bit 
-  * ASCII character sets, but doesn't allow to print bitmap
-  * graphics.
+  * The CPC's printer port has only 7 bits of data, therefore can only print 128 
+  * different characters instead of the 256 allowed by a 8-bit data port. 7-bit 
+  * data port is enough for printing English 7-bit ASCII character sets, but 
+  * doesn't allow to print bitmap graphics.
   * 
   * http://www.cpcwiki.eu/index.php/Connector:Printer_port
   * PIN 1 = /STROBE     PIN 2 = D0
@@ -63,8 +65,8 @@
   * PINS 9, 14, 16, 19 to 26, 28 and 33 = GND
   * PINS 10, 12, 13, 15, 17, 18, 27, 29, 30, 31, 32, 34, 35, 36 = Not Connected
   * 
-  * /Strobe goes from high to low for 0.5 ms to indicate that the 
-  * Data pins (D0..D6) are holding valid data.
+  * /Strobe goes from high to low for 0.5 ms to indicate that the Data pins 
+  * (D0..D6) are holding valid data.
   * 
   * The BUSY signal is set by the printer and instructs the Amstrad CPC to
   * wait until the printer can receive more data. Low when printer is ready 
@@ -92,7 +94,7 @@
 /////////////////////////////////////////////////////////////////////////
 // Teensy 2.0's digital pins usable for interrupts (5, 6, 7, 8)
 #define PRN_STRB  5   // /Strobe
-#define ONOFF_BTN 6   // Online/Offline signal (through push-buttons + 555 Timer IC)
+#define ONOFF_BTN 6   // Online/Offline signal through push-button
 
 #define PRN_D0    0   // Data 0
 #define PRN_D1    1   // Data 1
@@ -108,9 +110,11 @@
 #define COM_SPEED 115200 // Speed of the COM port between Arduino and PC
 
 /////////////////////////////////////////////////////////////////////////
-byte data;      // Variable for converting parallel data from D0..D6 as a single byte
-char buf[2];    // Variable for converting byte to hex using sprintf
-bool wasOnline; // Variable for storing Online/Offline push-button state
+byte data = 0;          // Variable for converting parallel data (D0..D6) as a single byte
+char buf[2];            // Variable for converting byte to hex using sprintf
+bool wasOnline = false; // Variable for storing Online/Offline push-button state
+unsigned long debounceDelay = 150; // delay time to avoid bounce from the push-button
+unsigned long lastDebounce = 0;   // time since push-button was last pressed
 
 /////////////////////////////////////////////////////////////////////////
 void setup() {
@@ -133,9 +137,6 @@ void setup() {
   pinMode(ONOFF_BTN, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(ONOFF_BTN), btnPressed, CHANGE);
     
-  wasOnline = false;
-  data = 0;
-
   digitalWrite(11, HIGH);   // turn the Teensy's internal LED on
 
   Serial.begin(COM_SPEED);
@@ -144,7 +145,7 @@ void setup() {
 
 /////////////////////////////////////////////////////////////////////////
 void readCPCbyte(){
-  // This function is called when /Strobe is Low (detected by Arduino interrupt)
+  // This function is called when /Strobe is Low (detected by Arduino ISR)
 
   // Receive Byte
   bitWrite(data, 0, digitalRead(PRN_D0));
@@ -154,29 +155,37 @@ void readCPCbyte(){
   bitWrite(data, 4, digitalRead(PRN_D4));
   bitWrite(data, 5, digitalRead(PRN_D5));
   bitWrite(data, 6, digitalRead(PRN_D6));
-  // print byte as hexadecimal value to the Serial port
+  // print byte as hexadecimal value to the USB Serial port
   sprintf(buf, "%02x", data);
   Serial.print(buf);
 }
 
 /////////////////////////////////////////////////////////////////////////
 void btnPressed(){
-  // This function is called each time ONLINE/OFFLINE is Low (detected by Arduino interrupt)
-
+  // This function is called each time Online/Offline is Low (detected by Arduino ISR)
   digitalWrite(PRN_BUSY, HIGH); // Printer is Offline, tell the CPC that can't send data
-  
-  if(digitalRead(ONOFF_BTN) == LOW){
-    if(wasOnline){
-      wasOnline = false;
-      Serial.print(25, HEX); // ESC 19 = Deselect printer
-    }else{
-      wasOnline = true;
-      Serial.print(23, HEX); // ESC 17 = Select printer
-      digitalWrite(PRN_BUSY, LOW); // Printer is Online, tell the CPC that we're ready for data
+
+  if((millis() - lastDebounce) > debounceDelay){
+    // timer is been stable for long enough time to consider it not a bounce
+
+    if(digitalRead(ONOFF_BTN) == LOW){
+      if(wasOnline){
+        // Switch from Online to Offline
+        wasOnline = false;
+        Serial.print(25, HEX); // ESC 19 = Deselect printer
+      }else{
+        // Switch from Offline to Online
+        wasOnline = true;
+        Serial.print(23, HEX); // ESC 17 = Select printer
+//        digitalWrite(PRN_BUSY, LOW); // Printer is Online, tell the CPC that we're ready for data
+      }
     }
+    
+    lastDebounce = millis(); // reset debounce timer
   }
 
   digitalWrite(ONOFF_LED, wasOnline);
+  digitalWrite(PRN_BUSY, !wasOnline);
 }
 
 /////////////////////////////////////////////////////////////////////////
