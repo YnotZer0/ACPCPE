@@ -1,6 +1,6 @@
 **ACPCPE v2.0 (A CPC Printer Emulator)**
 
-![ACPCPE](https://github.com/asmCcoder/ACPCPE/blob/master/ACPCPE_full.jpg "ACPCPE")
+![ACPCPE v2.0](https://github.com/asmCcoder/ACPCPE/blob/master/ACPCPE_v2.jpg "ACPCPE v2.0")
 
 The (exchange the A for  Amstrad,  Arduino, Awesome, Awful or whatever
 you want) CPC Printer Emulator is a hardware and software project that
