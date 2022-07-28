@@ -2,13 +2,11 @@
 
 ![ACPCPE v2.0](https://github.com/asmCcoder/ACPCPE/blob/master/ACPCPE_v2.jpg "ACPCPE v2.0")
 
-The (exchange the A for  Amstrad,  Arduino, Awesome, Awful or whatever
+The (exchange the A for  *Amstrad*,  *Arduino*, *Awesome*, *Awful* or whatever
 you want) CPC Printer Emulator is a hardware and software project that
-allows to connect the Amstrad CPC's Printer  port to a PC that acts as
-Epson-compatible dot matrix  printer  and  generates  files instead of
-printing on paper.
+allows to connect the [Amstrad CPC](https://en.wikipedia.org/wiki/Amstrad_CPC)'s Printer  port to a PC that acts as Epson-compatible dot matrix  printer  and  generates  files instead of printing on paper.
 
-CPC's  Printer  Port  (Parallel)  =>   Arduino  pins  =>  Arduino  USB
+> CPC's  Printer  Port  (Parallel)  =>   Arduino  pins  =>  Arduino  USB
 (Serial) => PC USB Serial port
 
 With the ACPCPE it is possible to  *print*  from a real Amstrad CPC to a
@@ -24,16 +22,16 @@ Type option).
 
 **But why printing from an Amstrad CPC in 2019?**
 
-I know it sounds a bit crazy,  but  I still use my Amstrad CPC6128 for
-word processing. Yes, I'm a bit  crazy.  I'm not going into details to
-try to justify myself. It simply works  for  me  and I enjoy it. Did I
-mention that this README file  was  written  on a real Amstrad CPC6128
-with Protext?
+I know it sounds a bit crazy,  but  I still use sometimes my Amstrad 
+CPC6128 for word processing. Yes, I'm a bit  crazy.  I'm not going into 
+details to try to justify myself. It simply works  for  me  and I enjoy 
+it. Did I mention that this README file  was  written  on a real Amstrad
+CPC6128 with Protext?
 
 **How it works?**
 
 The Amstrad CPC Printer Port is connected to an Arduino that reads the
-/Strobe and 7 data signals. The Arduino software translates the 7 data bits
+/Strobe and 7 Data signals. The Arduino software translates the 7 data bits
 into a single 8-bit byte and transmits  it  through the USB cable to a
 connected PC running a  Python  program  that  interprets the data and
 generates text files.
@@ -51,17 +49,15 @@ generates text files.
 
 **The Amstrad CPC**
 
-As mentioned above, the Amstrad  CPC  strangely  uses a 7-bit data bus
-for the printer instead of the more  typical 8-bit. This means that is
-limited to a character set of just 128.
+As mentioned above, the Amstrad  CPC  uses a 7-bit data bus for the printer 
+instead of the more  typical 8-bit, which forms a full byte. Recently I looked
+at the schematics and I think the reason behind this seems to be that the CPC is using a 74LS273 (octal flip-flop) for the Data and Strobe signals. Being of octal type means it can only carry eight signals. So my guess is that the designers at Amstrad had to sacrifice one Data signal to add the Strobe signal, because they already run out of output signals on the 8255 PPI which would have been my first choice, and thus ended up  with 7 signals for the Data which it's enough for a character set of just 128.
 
-Also strangely, Amstrad just decided despite using a 34-pin edge
-connector to not use any of  the typical Centronics signals and reduce
-the whole interface to 9 pins  (/Strobe,  Busy and 7 data). This means
-there is no way for the Amstrad  to;  know  when the printer is out of
-paper, send a reset, send a linefeed or even use the Ack signal.
+Also, strangely Amstrad decided despite using a 34-pin edge connector to not use 
+any of  the typical Centronics signals and reduce the whole interface to 9 pins
+(/Strobe,  Busy and 7 data). This means there is no way for the Amstrad  to;  know  when the printer is out of paper, send a reset, send a linefeed or even use the Ack signal.
 
-They could have had instead a 9-pin  edge connector or even a D-sub 9-
+They could have used instead a 9-pin  edge connector or even a D-sub 9-
 pin connector.
 
 For a detailed pinout of  the  Printer  Port,  check the Amstrad CPC's
