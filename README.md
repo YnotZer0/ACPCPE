@@ -1,6 +1,12 @@
-**ACPCPE v2.0 (A CPC Printer Emulator)**
+**TP_ACPCPE v1.0 (A CPC Printer Emulator)**
 
-![ACPCPE v2.0](https://github.com/asmCcoder/ACPCPE/blob/master/ACPCPE_v2.jpg "ACPCPE v2.0")
+Lifted 100% from the original work from [ACPCPE v2.0](https://github.com/dasta400/ACPCPE)
+
+What am I going to do different? Well, I've used a different Teensy 3.0 device and I'm going to hook it up to a Raspberry Pi, that will be running the Python3 app, that will, on completion not only output to the .html or .txt file, but also send the file for printing to my HP Laserjet Pro printer!  Oh & of course, I will migrate from the breadboard to a proper PCBWay professional PCB...
+
+![TP_ACPCPE v1.0](https://github.com/YnotZer0/ACPCPE/blob/master/TP_ACPCPE_v1.jpg "TP_ACPCPE v1.0")
+
+**
 
 The (exchange the A for  *Amstrad*,  *Arduino*, *Awesome*, *Awful* or whatever
 you want) CPC Printer Emulator is a hardware and software project that
