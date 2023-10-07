@@ -4,6 +4,9 @@ Lifted 100% from the original work from [ACPCPE v2.0](https://github.com/dasta40
 
 What am I going to do different? Well, I've used a different Teensy 3.0 device and I'm going to hook it up to a Raspberry Pi, that will be running the Python3 app, that will, on completion not only output to the .html or .txt file, but also send the file for printing to my HP Laserjet Pro printer!  Oh & of course, I will migrate from the breadboard to a proper PCBWay professional PCB...
 
+There are times when doing a PRINT#8 or LIST#8 just refuses to work - only way I've found to resolve this is to disconnect the /STROBE on Pin 1 and connect it to the Pin above it, this seems to reset it, then reconnecting back it all then appears to work okay again.  I might need to design for this when I make the PCB board (or find out a better solution?).
+For now I have been using a copycat.bas file from John A. Campbell that performs a CAT and dumps a hard copy of it out to the printer - it uses PRINT#8 and some machine code to do this, but it's a great little program and it proves this tool works well.  As it is BASIC you can load"copycat.bas" and the LIST#8 and output the BASIC program to the printer too and get that as a file on the RPi.  that's pretty awesome.  I don't need to figure out a way to send files/data back as I've got Dukes M4 for connecting to the WiFi to download files!
+
 ![TP_ACPCPE v1.0](https://github.com/YnotZer0/ACPCPE/blob/master/TP_ACPCPE_v1.jpg "TP_ACPCPE v1.0")
 
 **
