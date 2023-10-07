@@ -118,12 +118,18 @@ unsigned long lastDebounce = 0;   // time since push-button was last pressed
 
 /////////////////////////////////////////////////////////////////////////
 void setup() {
+  Serial.begin(COM_SPEED);
+
+//  Serial.println("Setting up printer comms");
+//  Serial.println("telling PIN 9 CPC were busy");
   pinMode(PRN_BUSY, OUTPUT);
   digitalWrite(PRN_BUSY, 1); // Tell CPC that we're busy setting up everything
   
+//  Serial.println("Turn LED OFF");
   pinMode(ONOFF_LED, OUTPUT);
   digitalWrite(ONOFF_LED, LOW);
   
+//  Serial.println("set all pins to INPUT");
   pinMode(PRN_D0, INPUT);
   pinMode(PRN_D1, INPUT);
   pinMode(PRN_D2, INPUT);
@@ -132,20 +138,25 @@ void setup() {
   pinMode(PRN_D5, INPUT);
   pinMode(PRN_D6, INPUT);
 
+//  Serial.println("Pulling Strobe and Button up");
   pinMode(PRN_STRB, INPUT_PULLUP);
+  //if Strobe goes LOW then call the readCPCbyte function
   attachInterrupt(digitalPinToInterrupt(PRN_STRB), readCPCbyte, LOW);
   pinMode(ONOFF_BTN, INPUT_PULLUP);
+  //if the BTN status changes call btnPressed function
   attachInterrupt(digitalPinToInterrupt(ONOFF_BTN), btnPressed, CHANGE);
     
-  digitalWrite(11, HIGH);   // turn the Teensy's internal LED on
+  //on this Teensy it is pin 13
+//  digitalWrite(13, HIGH);   // turn the Teensy's internal LED on
 
-  Serial.begin(COM_SPEED);
+//  Serial.println("Deselecting printer");
   Serial.print(25, HEX); // ESC 19 = Deselect printer
 }
 
 /////////////////////////////////////////////////////////////////////////
 void readCPCbyte(){
   // This function is called when /Strobe is Low (detected by Arduino ISR)
+//  Serial.println("\nStrobe is LOW so were sending data to USB port");
 
   // Receive Byte
   bitWrite(data, 0, digitalRead(PRN_D0));
@@ -157,11 +168,25 @@ void readCPCbyte(){
   bitWrite(data, 6, digitalRead(PRN_D6));
   // print byte as hexadecimal value to the USB Serial port
   sprintf(buf, "%02x", data);
+//  Serial.println("and here is what we sent");
   Serial.print(buf);
 }
 
 /////////////////////////////////////////////////////////////////////////
 void btnPressed(){
+//Serial.print("\nBUSY= "); Serial.print(digitalRead(PRN_BUSY));
+//Serial.print("\nSTRB= "); Serial.print(digitalRead(PRN_STRB));
+//Serial.print("\nBTN = "); Serial.print(digitalRead(ONOFF_BTN));
+//Serial.print("\nDATA= ");
+//Serial.print(digitalRead(PRN_D0));
+//Serial.print(digitalRead(PRN_D1));
+//Serial.print(digitalRead(PRN_D2));
+//Serial.print(digitalRead(PRN_D3));
+//Serial.print(digitalRead(PRN_D4));
+//Serial.print(digitalRead(PRN_D5));
+//Serial.println(digitalRead(PRN_D6));
+
+//  Serial.println("\nbutton pressed");
   // This function is called each time Online/Offline is Low (detected by Arduino ISR)
   digitalWrite(PRN_BUSY, HIGH); // Printer is Offline, tell the CPC that can't send data
 
@@ -173,11 +198,15 @@ void btnPressed(){
         // Switch from Online to Offline
         wasOnline = false;
         Serial.print(25, HEX); // ESC 19 = Deselect printer
+//        Serial.println("\nprinter offline");
+        digitalWrite(PRN_BUSY, HIGH);
       }else{
         // Switch from Offline to Online
         wasOnline = true;
         Serial.print(23, HEX); // ESC 17 = Select printer
-//        digitalWrite(PRN_BUSY, LOW); // Printer is Online, tell the CPC that we're ready for data
+//        Serial.println("\nprinter online");
+        digitalWrite(PRN_BUSY, LOW); // Printer is Online, tell the CPC that we're ready for data
+        //in theory setting this should invoke the call to readCPCbyte?
       }
     }
     
@@ -185,7 +214,7 @@ void btnPressed(){
   }
 
   digitalWrite(ONOFF_LED, wasOnline);
-  digitalWrite(PRN_BUSY, !wasOnline);
+//  digitalWrite(PRN_BUSY, !wasOnline);
 }
 
 /////////////////////////////////////////////////////////////////////////
