@@ -1,0 +1,26 @@
+10 'CAT Hard Copy, by John A. Campbell
+20 MODE 2
+30 '==================================
+40 MEMORY &7FFF:MODE 2
+50 FOR A=&8000 TO &8032:READ BYTE: POKE A,BYTE:NEXT 
+60 PRINT"DATE = ";:INPUT d$:IF d$="" THEN STOP  
+70 PRINT#8,STRING$(38,"=")   
+80 WHILE 1
+90 MODE 2:PRINT"Disc = ";:INPUT a$:IF a$="" THEN STOP 
+95 PRINT"Contents = ";:INPUT c$
+100 MODE 1
+110 CLS
+120 PRINT"              Tabulation Left (1), Middle (2), or Right (3)?"  
+130 INPUT W   
+140 IF W=1 THEN N=0  
+150 IF W=2 THEN N=47     
+160 IF W=3 THEN N=94   
+170 PRINT#8,CHR$(27);CHR$(15);CHR$(27);CHR$(108);CHR$(N);"Disc: ";a$;"     Date: ";d$ :PRINT#8:PRINT#8,c$
+180 CALL &801E:CAT:CALL &802B
+190 PRINT#8:PRINT#8,STRING$(38,"=")          
+200 WEND
+210 REM machine code to load at &8000-&8032
+220 DATA &F5,&3A,&32,&80,&BC,&38,&07,&3E,&0A,&CD,&F1,&BD,&30,&F9,&7C,&32,&32
+230 DATA &80,&F1,&F5,&CD,&F1,&BD,&38,&03,&F1,&18,&E4,&F1,&C9,&2A,&D4,&BD,&22
+240 DATA &33,&80,&21,&00,&80,&22,&D4,&BD,&C9,&2A,&33,&80,&22,&D4,&BD,&C9,&00
+250 PRINT#8,CHR$(27);CHR$(18)
