@@ -9,6 +9,9 @@ For now I have been using a copycat.bas file from John A. Campbell that performs
 
 ![TP_ACPCPE v1.0](https://github.com/YnotZer0/ACPCPE/blob/master/TP_ACPCPE_v1.jpg "TP_ACPCPE v1.0")
 
+Now with added OLED screen included:
+![TP_ACPCPE v1.0](https://github.com/YnotZer0/ACPCPE/blob/master/schematic.png "TP_ACPCPE v1.0")
+
 **
 
 The (exchange the A for  *Amstrad*,  *Arduino*, *Awesome*, *Awful* or whatever
