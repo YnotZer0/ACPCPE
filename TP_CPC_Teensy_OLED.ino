@@ -1,6 +1,7 @@
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SH110X.h>
+#include <string.h>
 
 #define i2c_Address 0x3c //initialize with the I2C addr 0x3C Typically eBay OLED's
 //#define i2c_Address 0x3d //initialize with the I2C addr 0x3D Typically Adafruit OLED's
@@ -15,7 +16,7 @@ Adafruit_SH1106G display = Adafruit_SH1106G(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, 
 
 /////////////////////////////////////////////////////////////////////////
 // Teensy 2.0's digital pins usable for interrupts (5, 6, 7, 8)
-// Teensy 3.0 - all pins can be used for interrupts
+// Teensy 3.0 & 4.0 - all pins can be used for interrupts
 #define PRN_STRB  5   // /Strobe
 #define ONOFF_BTN 6   // Online/Offline signal through push-button
 
@@ -30,12 +31,12 @@ Adafruit_SH1106G display = Adafruit_SH1106G(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, 
 #define PRN_BUSY  9   // Busy = HIGH / Ready = LOW
 #define ONOFF_LED 10  // Indicator of "printer" Online/Offline
 
-#define COM_SPEED 115200 // Speed of the COM port between Arduino and PC
+#define COM_SPEED 9600 // Speed of the COM port between Arduino and PC
 
 /////////////////////////////////////////////////////////////////////////
 byte data = 0;          // Variable for converting parallel data (D0..D6) as a single byte
 char buf[2];            // Variable for converting byte to hex using sprintf
-char buff[2];           // used to output to OLED
+char buff[1200];        // used to output to OLED
 bool wasOnline = false; // Variable for storing Online/Offline push-button state
 unsigned long debounceDelay = 150; // delay time to avoid bounce from the push-button
 unsigned long lastDebounce = 0;   // time since push-button was last pressed
@@ -65,13 +66,13 @@ void setup() {
 //  Serial.println("Pulling Strobe and Button up");
   pinMode(PRN_STRB, INPUT_PULLUP);
   //if Strobe goes LOW then call the readCPCbyte function
-  attachInterrupt(digitalPinToInterrupt(PRN_STRB), readCPCbyte, CHANGE); //LOW);
+  attachInterrupt(digitalPinToInterrupt(PRN_STRB), readCPCbyte, CHANGE); //CHANGE); //LOW);
   pinMode(ONOFF_BTN, INPUT_PULLUP);
   //if the BTN status changes call btnPressed function
   attachInterrupt(digitalPinToInterrupt(ONOFF_BTN), btnPressed, CHANGE);
     
   //on this Teensy it is pin 13
-//  digitalWrite(13, HIGH);   // turn the Teensy's internal LED on
+  digitalWrite(13, HIGH);   // turn the Teensy's internal LED on
 
   Serial.begin(COM_SPEED);
 //  Serial.println("Deselecting printer");
@@ -112,8 +113,28 @@ void readCPCbyte(){
     Serial.print(buf);           //this outputs the buf value
     //also output to the OLED screen
     //need to put the code in place to cater for only outputting 21 chars per line
-    sprintf(buff, "%02x", data);
+    char result[5];
+    hextostr(buf,result);
+    //Serial.println(result);
+    strcat(buff, result);
+    //Serial.write(char(data));
+
   }
+}
+
+void hextostr(char *hex, char *result)
+{
+  char temp[3];
+  int index = 0;
+  temp[2] = '\0';
+  while (hex[index]) {
+        strncpy(temp, &hex[index], 2);
+        //*result = (char) atoi(temp);
+        *result = (char)strtol(temp, NULL, 16);
+        result++;
+        index += 2;
+  }
+  *result = '\0';
 }
 
 void displayoutput(){
@@ -123,7 +144,8 @@ void displayoutput(){
   display.setTextSize(1);
   display.setCursor(0, 0);
   display.setTextColor(SH110X_WHITE);
-  display.print(buff);//0a!
+  display.print(buff);//68656c6c6f0d0a  
+  //probably should convert from HEX to DEC and output?!
   display.display();
 }
 
@@ -155,12 +177,14 @@ void btnPressed(){
         Serial.print(25, HEX); // ESC 19 = Deselect printer
 //        Serial.println("\nprinter offline");
         digitalWrite(PRN_BUSY, HIGH);
+        digitalWrite(13, HIGH);   // turn the Teensy's internal LED on
         //output text to display
         displayoutput();
       }else{
         // Switch from Offline to Online
         wasOnline = true;
         Serial.print(23, HEX); // ESC 17 = Select printer
+        digitalWrite(13, LOW);   // turn the Teensy's internal LED on
         display.clearDisplay(); //clear buffer
         display.display();      //clear splash screen
 //        Serial.println("\nprinter online");
